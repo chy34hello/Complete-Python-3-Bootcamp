@@ -5,7 +5,9 @@ import re
 
 #FILE_NAME = input('Which text file do you want to use for the puzzle?')
 FILE_CONTENTS = 'test_3.txt'
-DELIMITERS = '\.|\!|\?'
+DELIMITERS = '\.|\?'
+
+STATEMENT_pattern = r'"([A-Za-z0-9_\./\\-]*)"'
 
 try:
   with open(FILE_CONTENTS,'r') as f:
@@ -15,9 +17,33 @@ except FileNotFoundError:
 
 
 
-list1 = re.split(DELIMITERS,FILE_CONTENTS.replace('\n', '').strip())
+list1 = re.split(DELIMITERS,FILE_CONTENTS.replace('\n', ' ').strip())
 list1.pop()
 print(list1)
+
+print()
+print()
+
+
+list1 = re.split(DELIMITERS,FILE_CONTENTS.replace('\n', ' ').strip())
+for i in range(0, len(list1),1):
+  if '!"' in list1[i]:
+     splited = list1[i].split('!"')
+     list1[1] =splited[1]
+     list1.insert(1, splited[0]+'!"')
+    
+
+
+list1.pop()
+print(list1)
+
+s = ' I asked Sir Andrew who he was, and he answered impatiently: "Sir Nancy and I are Knaves"'
+pattern = r'"([A-Za-z0-9! ]*)"'
+m = re.search(pattern, s)
+print(m.group())
+
+
+
 
 
 # lines = FILE_CONTENTS.split('.')

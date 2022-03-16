@@ -1,6 +1,7 @@
 from math import sqrt
 from time import time
 
+Primes = list()
 
 # O(nLogn)
 def sieve_of_primes_up_to(n):
@@ -13,6 +14,11 @@ def sieve_of_primes_up_to(n):
                 sieve[i] = False
     return sieve
 
+
+def generatePrimeList(sieve):
+  for i in range(2, len(sieve),1):
+    if sieve[i]:
+      Primes.append(i)
 
 def Eulers_sieve_of_primes_up_to(n):
   sieve = list(range(2, n+1))
@@ -64,7 +70,11 @@ def EularLinier (upperBound):
 
 
 #print(Eulers_sieve_of_primes_up_to_Using_set(49))
-sieve = list(range(2, 20_000+1))
+
+generatePrimeList(sieve_of_primes_up_to(300))
+
+print(Primes)
+
 
 
 # start_time = time()
@@ -72,10 +82,6 @@ sieve = list(range(2, 20_000+1))
 # passed_time = time() - start_time
 # print(f"It took {passed_time}")
 
-start_time = time()
-EularLinier(30)
-passed_time = time() - start_time
-print(f"It took {passed_time}")
 
 
 
