@@ -5,7 +5,7 @@ import re
 
 #FILE_NAME = input('Which text file do you want to use for the puzzle?')
 FILE_CONTENTS = 'test_3.txt'
-DELIMITERS = '\.|\?'
+DELIMITERS = '\.|\?|\!'
 
 STATEMENT_pattern = r'"([A-Za-z0-9_\./\\-]*)"'
 
@@ -16,46 +16,53 @@ except FileNotFoundError:
   print(f"No such file or directory:{FILE_CONTENTS}")
 
 
-
-list1 = re.split(DELIMITERS,FILE_CONTENTS.replace('\n', ' ').strip())
+list1 = re.split(DELIMITERS,FILE_CONTENTS.replace('\n', ' ').replace('!"', '"!').replace('."', '".').replace(',"', '",').strip())
 list1.pop()
 print(list1)
 
 print()
 print()
 
+SirList = dict()
+for s in list1:
+  if 'Sir ' in s and '"' in s:
+    before, key, name2 = s.partition('Sir ')
+    name2 = name2.split(' ')[0]
 
-list1 = re.split(DELIMITERS,FILE_CONTENTS.replace('\n', ' ').strip())
-for i in range(0, len(list1),1):
-  if '!"' in list1[i]:
-     splited = list1[i].split('!"')
-     list1[1] =splited[1]
-     list1.insert(1, splited[0]+'!"')
-    
+    m = s.split('"')[1]
+    if 'Sir ' in m:
+      before, key, name = m.partition('Sir ')
+      name = name.split(' ')[0]
+      if name.strip() not in SirList.keys():
+        SirList[name.strip()] = ''
+    SirList[name2.strip()] = m
+  elif  'Sir ' in s and '"' not in s:
+      before, key, name2 = s.partition('Sir ')
+      name2 = name2.split(' ')[0]
+      if name.strip() not in SirList.keys():
+        SirList[name.strip()] = ''
+
+  if 'Sirs' in s:
+    before, key, names = s.partition('Sirs')
+    namesList = names.split(',')
+    for name in namesList:
+      if ' and ' in name:
+        before, key, name = name.partition(' and ')
+        SirList[before.strip()] = ''
+        SirList[name.strip()] = ''
+      else:
+        SirList[name.strip()] = ''
 
 
-list1.pop()
-print(list1)
-
-s = ' I asked Sir Andrew who he was, and he answered impatiently: "Sir Nancy and I are Knaves"'
-pattern = r'"([A-Za-z0-9! ]*)"'
-m = re.search(pattern, s)
-print(m.group())
+print(SirList)
+sortedSirs = dict(sorted(SirList.items()))
+print(sortedSirs.keys())
 
 
-
-
-
-# lines = FILE_CONTENTS.split('.')
-# print(len(lines))
-# print(lines)
-#print(FILE_CONTENTS)
-
-
-# GENERATING all possiblities for each Sir
+#GENERATING all possiblities for each Sir
 intToDigits = lambda a : list(map(int, str(a)))
    
-Sirs_num = 3
+Sirs_num = len(SirList)
 formating_String = str(0)+str(Sirs_num)+'b'
 initialP =[]
 for p in range(2**Sirs_num):
