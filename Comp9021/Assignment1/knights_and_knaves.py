@@ -169,7 +169,7 @@ def parsingSirs(sentense):
   return l1
 
 
-print(parsingSirs('Sir Nancy and I are Knaves'))
+#print(parsingSirs('Sir Nancy and I are Knaves'))
 
 #sortedSirs , initialP
 #list(sortedSirs.keys())
@@ -179,6 +179,50 @@ print(keys)
 
 
 #execute rule:
+
+def run_rule_1(speaker,posibility, sentense):
+  value= False
+  if ' us ' in sentense:
+    for sir in posibility:
+      if ' knight' in sentense.lower():
+        if sir == 1:
+          value= True 
+          s_index = keys.index(speaker)
+          speaker_is_night = True if posibility[s_index] ==1 else False
+          return biconditional(speaker_is_night, value )
+      else:
+        if sir == 0:
+          value= True  
+          s_index = keys.index(speaker)
+          speaker_is_night = True if posibility[s_index] ==1 else False
+          return biconditional(speaker_is_night, value )
+
+  # if no us
+  sirs_involved = parsingSirs(sentense)
+  for i in range(0, len(sirs_involved)):
+    if sirs_involved[i] == "I":
+      sirs_involved[i] = speaker
+
+  for sir in sirs_involved:
+    index = keys.index(sir)
+    if ' knight' in sentense.lower():
+      if posibility[index]==1:
+        value =True
+        s_index = keys.index(speaker)
+        speaker_is_night = True if posibility[s_index] ==1 else False
+        return biconditional(speaker_is_night, value )
+    elif ' knave' in sentense.lower():
+      if posibility[index]==0:
+        value = True
+        s_index = keys.index(speaker)
+        speaker_is_night = True if posibility[s_index] ==1 else False
+        return biconditional(speaker_is_night, value )
+  
+
+
+
+#run_rule_1('Bill', [1,1,1,0], 'at least one of Sir Hilary and I is a Knave.')
+
 
 def run_rule_5(is_knight, sentense):
   value =is_knight if 'knight' in sentense.lower() else not is_knight
@@ -221,14 +265,18 @@ def true_false(num):
 
 
 
-Result = False
+
 
 def truth_table():
+  Result = False
   for posibility in initialP:
     for i in range (len(sortedSirs)):
 
       # to implement 2 or more statements
       if(sortedSirs[keys[i]]):
+        if (whichRule(sortedSirs[keys[i]])==9):
+          print('Rule 1 is triggered')
+          Result = run_rule_1( keys[i],posibility,sortedSirs[keys[i]])
         if (whichRule(sortedSirs[keys[i]])==5):
           Result = run_rule_5(true_false(posibility[i]),sortedSirs[keys[i]])
         elif (whichRule(sortedSirs[keys[i]])==8):
@@ -236,7 +284,8 @@ def truth_table():
           Result = run_rule_8( keys[i],posibility,sortedSirs[keys[i]])
         if Result:
           print(posibility)
-  Result = False
+          Result = False
+  
 
 
 truth_table()
