@@ -1,291 +1,410 @@
-# EDIT THE FILE WITH YOUR SOLUTION
-import sys
+from ast import keyword
 import re
 
-
-#FILE_NAME = input('Which text file do you want to use for the puzzle?')
-FILE_CONTENTS = 'test_3.txt'
-DELIMITERS = '\.|\?|\!'
-
-STATEMENT_pattern = r'"([A-Za-z0-9_\./\\-]*)"'
-
-try:
-  with open(FILE_CONTENTS,'r') as f:
-    FILE_CONTENTS= f.read()
-except FileNotFoundError:
-  print(f"No such file or directory:{FILE_CONTENTS}")
-
-
-list1 = re.split(DELIMITERS,FILE_CONTENTS.replace('\n', ' ').replace('!"', '"!').replace('."', '".').replace(',"', '",').strip())
-list1.pop()
-print(list1)
-
-print()
-print()
-
-SirList = dict()
-for s in list1:
-  if 'Sir ' in s and '"' in s:
-    before, key, name2 = s.partition('Sir ')
-    name2 = name2.split(' ')[0]
-
-    m = s.split('"')[1]
-    if 'Sir ' in m:
-      before, key, name = m.partition('Sir ')
-      name = name.split(' ')[0]
-      if name.strip() not in SirList.keys():
-        SirList[name.strip()] = ''
-    SirList[name2.strip()] = m
-  elif  'Sir ' in s and '"' not in s:
-      before, key, name2 = s.partition('Sir ')
-      name2 = name2.split(' ')[0]
-      if name.strip() not in SirList.keys():
-        SirList[name.strip()] = ''
-
-  if 'Sirs' in s:
-    before, key, names = s.partition('Sirs')
-    namesList = names.split(',')
-    for name in namesList:
-      if ' and ' in name:
-        before, key, name = name.partition(' and ')
-        SirList[before.strip()] = ''
-        SirList[name.strip()] = ''
-      else:
-        SirList[name.strip()] = ''
+question = 'Which text file do you want to use for the puzzle? '
+sirs_with_sentences_unsorted = dict()
+all_pissible_combination = []
+sentence_divider = '\.|\?|\!'
+binary_symbol = 'b'
+keyword_Sir = 'Sir '
+keyword_sir = 'sir '
+keyword_sirs = 'Sirs '
+keyword_least = 'least'
+keyword_most = 'most'
+keyword_knight = ' knight'
+keyword_knights = ' knights'
+keyword_knave = ' knave'
+keyword_knaves = ' knaves'
+keyword_exactly = 'exactly'
+keyword_us = ' us '
+keyword_are = 'are '
+keyword_all = 'all '
+keyword_am = 'am '
+keyword_i = 'i '
+keyword_I = 'I '
+keyword_is = ' is '
+and_operator = ' and '
+or_operator = ' or '
+quote = '"'
+space = ' '
+comma = ','
+change_line = '\n'
+empty_string = ''
 
 
-#print(SirList)
-sortedSirs = dict(sorted(SirList.items()))
-# print(list(sortedSirs.keys()))
-print(sortedSirs)
+def open_test_file():
+    file_name = input(question)
+    try:
+        with open(file_name, 'r') as f:
+            file_content = f.read()
+    except FileNotFoundError:
+        print(f"file not found: {file_name}")
+    return file_content
 
 
-#GENERATING all possiblities for each Sir
-intToDigits = lambda a : list(map(int, str(a)))
-   
-Sirs_num = len(SirList)
-formating_String = str(0)+str(Sirs_num)+'b'
-initialP =[]
-for p in range(2**Sirs_num):
-  temp = [(int(c)) for c in f'{p:{formating_String}}']
-  initialP.append(temp)
+def format_and_generate_list(file_content, sentence_divider):
+    formated_content = file_content.replace(change_line, space).replace(
+        '!"', '"!').replace('."', '".').replace(',"', '",').strip()
+    divided_file_list = re.split(sentence_divider, formated_content)
+    divided_file_list.pop()
+    return divided_file_list
 
-print(initialP)
 
+def parsing_to_dict(sir_list, sentence_divider, open_test_file, format_and_generate_list):
+    converted_file_list = format_and_generate_list(
+        open_test_file(), sentence_divider)
+    for sentence in converted_file_list:
+
+        if keyword_Sir in sentence and quote in sentence:
+
+            statement = sentence.split(quote)[1]
+            sentence = sentence.replace(statement, empty_string)
+            name = fetch_content_after_keyword(sentence, keyword_Sir)
+            speaker = name.split(space)[0]
+            sir_list[speaker.strip()] = statement
+
+            while keyword_Sir in statement:
+                statement = statement.replace(comma, empty_string)
+                name = fetch_content_after_keyword(statement, keyword_Sir)
+                sir_involved = name.split(space)[0]
+                if sir_involved.strip() not in sir_list.keys():
+                    sir_list[sir_involved.strip()] = empty_string
+                statement = name.replace(sir_involved, empty_string)
+
+        elif keyword_Sir in sentence and quote not in sentence:
+            sentence = sentence.replace(comma, empty_string)
+            non_speaker = fetch_content_after_keyword(
+                sentence, keyword_Sir).split(space)[0]
+
+            if non_speaker.strip() not in sir_list.keys():
+                sir_list[non_speaker.strip()] = empty_string
+
+        elif keyword_sirs in sentence:
+            after_keyword = fetch_content_after_keyword(sentence, keyword_sirs)
+            namesList = after_keyword.split(comma)
+            for name in namesList:
+                if and_operator in name:
+                    before, key, name = name.partition(and_operator)
+                    sir_list[before.strip()] = empty_string
+                    sir_list[name.strip()] = empty_string
+                else:
+                    sir_list[name.strip()] = empty_string
+    return dict(sorted(sir_list.items()))
+
+
+def fetch_content_after_keyword(sentence, keyword):
+    before_key, key, after_keyword = sentence.partition(keyword)
+    return after_keyword
+
+
+def generate_possibilities(all_pissible_combination, sirs_with_statements):
+    number_of_sirs = len(sirs_with_statements)
+    formating_String = str(0)+str(number_of_sirs)+binary_symbol
+    for possibility in range(2**number_of_sirs):
+        temp = [(int(c)) for c in f'{possibility:{formating_String}}']
+        all_pissible_combination.append(temp)
 
 
 def conjunction_of_sirs(sentence):
-  if ' and ' in sentence.lower():
-    return True
-  else:
-    return False
-  
+    return True if and_operator in sentence.lower() else False
+
+
 def disjunction_of_sirs(sentence):
-  if ' or ' in sentence.lower():
-    return True
-  else:
-    return False
-
-def rule_1(sentence):
-  least = True if re.search(r'\bleast\b', sentence.lower()) else False
-  us = True if re.search(r'\bus\b', sentence.lower()) else False
-  return least and (conjunction_of_sirs(sentence.lower()) or us)
-
-def rule_2(sentence):
-  most = True if re.search(r'\bmost\b', sentence.lower()) else False
-  us = True if re.search(r'\bus\b', sentence.lower()) else False
-  return most and (conjunction_of_sirs(sentence.lower()) or us)
-
-def rule_3(sentence):
-  exactly = True if re.search(r'\bexactly\b', sentence.lower()) else False
-  us = True if re.search(r'\bus\b', sentence.lower()) else False
-  return exactly and (conjunction_of_sirs(sentence.lower()) or us)
-
-def rule_4(sentence):
-  are = True if re.search(r'\bare\b', sentence.lower()) else False
-  all = True if re.search(r'\ball\b', sentence.lower()) else False
-  return are and all
-
-def rule_5(sentence):
-  am = True if re.search(r'\bam \b', sentence.lower()) else False
-  I = True if re.search(r'\bi \b', sentence.lower()) else False
-  return am and I
-
-def rule_6(sentence):
-  sir = True if re.search(r'\bsir \b', sentence.lower()) else False
-  _is = True if re.search(r'\b is \b', sentence.lower()) else False
-  noOr = False if re.search(r'\b or\b', sentence.lower()) else True
-  return sir and noOr and _is
-
-def rule_7(sentence):
-  _is = True if re.search(r'\b is \b', sentence.lower()) else False
-  return _is and disjunction_of_sirs(sentence.lower())
-
-def rule_8(sentence):
-  are = True if re.search(r'\bare\b', sentence.lower()) else False
-  return are and conjunction_of_sirs(sentence.lower())
-  
+    return True if or_operator in sentence.lower() else False
 
 
-
-def whichRule(sentence):
-  if rule_1(sentence) == True:
-      return 1
-  elif rule_2(sentence) == True:
-      return 2
-  elif rule_3(sentence) == True:
-      return 3
-  elif rule_4(sentence) == True:
-      return 4
-  elif rule_5(sentence) == True:
-      return 5
-  elif rule_6(sentence) == True:
-      return 6
-  elif rule_7(sentence) == True:
-      return 7  
-  elif rule_8(sentence) == True:
-      return 8  
-
-#print(whichRule('I am a Knave'))
-
-def biconditional(p,q):
-  if p==True and q==True:
-    return True
-  elif p==False and q==False:
-    return True
-  else:
-    return False
+def form_one(sentence):
+    least = True if keyword_least in sentence.lower() else False
+    us = True if keyword_us in sentence.lower() else False
+    return least and (conjunction_of_sirs(sentence.lower()) or us)
 
 
-def parsingSirs(sentense):
-  l1 = list()
-  sentense = sentense.replace(',','')
-  splited = sentense.split(' ')
-  for i in range(0, len(splited)):
-    if splited[i]=='Sir' or splited[i]=='sir':
-      l1.append(splited[i+1])
-  if "I " in sentense:
-    l1.append('I')
-  return l1
+def form_two(sentence):
+    most = True if keyword_most in sentence.lower() else False
+    us = True if keyword_us in sentence.lower() else False
+    return most and (conjunction_of_sirs(sentence.lower()) or us)
 
 
-#print(parsingSirs('Sir Nancy and I are Knaves'))
-
-#sortedSirs , initialP
-#list(sortedSirs.keys())
-keys = list(sortedSirs.keys())
-print(keys)
+def form_three(sentence):
+    exactly = True if keyword_exactly in sentence.lower() else False
+    us = True if keyword_us in sentence.lower() else False
+    return exactly and (conjunction_of_sirs(sentence.lower()) or us)
 
 
-
-#execute rule:
-
-def run_rule_1(speaker,posibility, sentense):
-  value= False
-  if ' us ' in sentense:
-    for sir in posibility:
-      if ' knight' in sentense.lower():
-        if sir == 1:
-          value= True 
-          s_index = keys.index(speaker)
-          speaker_is_night = True if posibility[s_index] ==1 else False
-          return biconditional(speaker_is_night, value )
-      else:
-        if sir == 0:
-          value= True  
-          s_index = keys.index(speaker)
-          speaker_is_night = True if posibility[s_index] ==1 else False
-          return biconditional(speaker_is_night, value )
-
-  # if no us
-  sirs_involved = parsingSirs(sentense)
-  for i in range(0, len(sirs_involved)):
-    if sirs_involved[i] == "I":
-      sirs_involved[i] = speaker
-
-  for sir in sirs_involved:
-    index = keys.index(sir)
-    if ' knight' in sentense.lower():
-      if posibility[index]==1:
-        value =True
-        s_index = keys.index(speaker)
-        speaker_is_night = True if posibility[s_index] ==1 else False
-        return biconditional(speaker_is_night, value )
-    elif ' knave' in sentense.lower():
-      if posibility[index]==0:
-        value = True
-        s_index = keys.index(speaker)
-        speaker_is_night = True if posibility[s_index] ==1 else False
-        return biconditional(speaker_is_night, value )
-  
+def form_four(sentence):
+    are = True if keyword_are in sentence.lower() else False
+    all = True if keyword_all in sentence.lower() else False
+    return are and all
 
 
-
-#run_rule_1('Bill', [1,1,1,0], 'at least one of Sir Hilary and I is a Knave.')
-
-
-def run_rule_5(is_knight, sentense):
-  value =is_knight if 'knight' in sentense.lower() else not is_knight
-  return biconditional(is_knight, value )
-
-def run_rule_8(speaker,posibility, sentense):
-  value= True
-  # extract Sirs list 
-  sirs_involved = parsingSirs(sentense)
-  for i in range(0, len(sirs_involved)):
-    if sirs_involved[i] == "I":
-      sirs_involved[i] = speaker
-
-  for sir in sirs_involved:
-    index = keys.index(sir)
-    if ' knights' in sentense.lower():
-      if posibility[index]==0:
-        value =False
-    elif ' knaves' in sentense.lower():
-      if posibility[index]==1:
-        value = False
-  
-  s_index = keys.index(speaker)
-  speaker_is_night = True if posibility[s_index] ==1 else False
-
-  return biconditional(speaker_is_night, value )
+def form_five(sentence):
+    am = True if keyword_am in sentence.lower() else False
+    I = True if keyword_i in sentence.lower() else False
+    return am and I
 
 
+def form_six(sentence):
+    sir = True if keyword_sir in sentence.lower() else False
+    _is = True if keyword_is in sentence.lower() else False
+    no_or = False if or_operator in sentence.lower() else True
+    return sir and no_or and _is
 
-#print(run_rule_8('Andrew',[0,0,0,0], 'Sir Nancy and I are Knaves'))
+
+def form_seven(sentence):
+    _is = True if keyword_is in sentence.lower() else False
+    return _is and disjunction_of_sirs(sentence.lower())
 
 
+def form_eight(sentence):
+    are = True if keyword_are in sentence.lower() else False
+    return are and conjunction_of_sirs(sentence.lower())
 
+
+def bi_conditional_check(condition_1, condition_2):
+    return True if condition_1 == condition_2 else False
+
+
+def identify_sir_from_statement(sentense):
+    sir_list = list()
+    sentense = sentense.replace(comma, empty_string)
+    splited = sentense.split(space)
+    for i in range(0, len(splited)):
+        if splited[i].lower() == keyword_sir.strip():
+            sir_list.append(splited[i+1])
+    if keyword_I in sentense:
+        sir_list.append(keyword_I.strip())
+    return sir_list
+
+
+def replace_I_with_sir(speaker, sirs_involved):
+    for i in range(len(sirs_involved)):
+        if sirs_involved[i] == keyword_I.strip():
+            sirs_involved[i] = speaker
+
+
+def is_speaker_knight(speaker, possibility):
+    index_of_speaker = involved_sir_list.index(speaker)
+    speaker_is_knight = True if possibility[index_of_speaker] == 1 else False
+    return speaker_is_knight
+
+
+def calculate_form_1(speaker, possibility, sentence):
+    value = False
+    speaker_is_knight = is_speaker_knight(speaker, possibility)
+
+    if keyword_us in sentence:
+        for sir in possibility:
+            if keyword_knight in sentence.lower():
+                value = True if sir == 1 else False
+            else:
+                value = True if sir == 0 else False
+            return bi_conditional_check(speaker_is_knight, value)
+
+    sirs_involved = identify_sir_from_statement(sentence)
+    replace_I_with_sir(speaker, sirs_involved)
+
+    for sir in sirs_involved:
+        index = involved_sir_list.index(sir)
+        if keyword_knight in sentence.lower():
+            if possibility[index] == 1:
+                value = True
+                return bi_conditional_check(speaker_is_knight, value)
+        elif keyword_knave in sentence.lower():
+            if possibility[index] == 0:
+                value = True
+                return bi_conditional_check(speaker_is_knight, value)
+    return value
+
+
+def calculate_form_2(speaker, possibility, sentence):
+    sir_number = 0
+    speaker_is_knight = is_speaker_knight(speaker, possibility)
+
+    if keyword_us in sentence:
+        for sir in possibility:
+            if keyword_knight in sentence.lower() and sir == 1:
+                sir_number += 1
+            elif keyword_knave in sentence.lower() and sir == 0:
+                sir_number += 1
+        return bi_conditional_check(speaker_is_knight, sir_number <= 1)
+
+    sirs_involved = identify_sir_from_statement(sentence)
+    replace_I_with_sir(speaker, sirs_involved)
+
+    for sir in sirs_involved:
+        index = involved_sir_list.index(sir)
+        if keyword_knight in sentence.lower() and possibility[index] == 1:
+            sir_number += 1
+        elif keyword_knave in sentence.lower() and possibility[index] == 0:
+            sir_number += 1
+    return bi_conditional_check(speaker_is_knight, sir_number <= 1)
+
+
+def calculate_form_3(speaker, possibility, sentence):
+    sir_number = 0
+    speaker_is_knight = is_speaker_knight(speaker, possibility)
+
+    if keyword_us in sentence:
+        for sir in possibility:
+            if keyword_knight in sentence.lower() and sir == 1:
+                sir_number += 1
+            elif keyword_knave in sentence.lower() and sir == 0:
+                sir_number += 1
+        return bi_conditional_check(speaker_is_knight, sir_number == 1)
+
+    sirs_involved = identify_sir_from_statement(sentence)
+    replace_I_with_sir(speaker, sirs_involved)
+
+    for sir in sirs_involved:
+        index = involved_sir_list.index(sir)
+        if keyword_knight in sentence.lower() and possibility[index] == 1:
+            sir_number += 1
+        elif keyword_knave in sentence.lower() and possibility[index] == 0:
+            sir_number += 1
+    return bi_conditional_check(speaker_is_knight, sir_number == 1)
+
+
+def calculate_form_4(speaker, possibility, sentence):
+    sir_number = 0
+    speaker_is_knight = is_speaker_knight(speaker, possibility)
+
+    if keyword_us in sentence:
+        for sir in possibility:
+            if keyword_knights in sentence.lower() and sir == 1:
+                sir_number += 1
+            elif keyword_knaves in sentence.lower() and sir == 0:
+                sir_number += 1
+    return bi_conditional_check(speaker_is_knight, sir_number == len(possibility))
+
+
+def calculate_form_5(speaker, possibility, sentence):
+
+    speaker_is_knight = is_speaker_knight(speaker, possibility)
+    value = speaker_is_knight if keyword_knight in sentence.lower() else not speaker_is_knight
+    return bi_conditional_check(speaker_is_knight, value)
+
+
+def calculate_form_6(speaker, possibility, sentence):
+    value = True
+    speaker_is_knight = is_speaker_knight(speaker, possibility)
+    sirs_involved = identify_sir_from_statement(sentence)
+
+    for sir in sirs_involved:
+        index = involved_sir_list.index(sir)
+        if keyword_knight in sentence.lower():
+            value = True if possibility[index] == 1 else False
+        elif keyword_knave in sentence.lower():
+            value = True if possibility[index] == 0 else False
+    return bi_conditional_check(speaker_is_knight, value)
+
+
+def calculate_form_7(speaker, possibility, sentence):
+    value = False
+    speaker_is_knight = is_speaker_knight(speaker, possibility)
+
+    sirs_involved = identify_sir_from_statement(sentence)
+    replace_I_with_sir(speaker, sirs_involved)
+
+    for sir in sirs_involved:
+        index = involved_sir_list.index(sir)
+        if keyword_knight in sentence.lower() and possibility[index] == 1:
+            value = True
+        elif keyword_knave in sentence.lower() and possibility[index] == 0:
+            value = True
+    return bi_conditional_check(speaker_is_knight, value)
+
+
+def calcualte_form_8(speaker, possibility, sentence):
+    value = True
+    speaker_is_knight = is_speaker_knight(speaker, possibility)
+
+    sirs_involved = identify_sir_from_statement(sentence)
+    replace_I_with_sir(speaker, sirs_involved)
+
+    for sir in sirs_involved:
+        index = involved_sir_list.index(sir)
+        if keyword_knights in sentence.lower() and possibility[index] == 0:
+            value = False
+        elif keyword_knaves in sentence.lower() and possibility[index] == 1:
+            value = False
+    return bi_conditional_check(speaker_is_knight, value)
 
 
 def true_false(num):
-  return True if num else False
+    return True if num else False
 
 
+def print_final_results(finalSolutionList):
+    finalString = 'The Sirs are:'
+    for sir in involved_sir_list:
+        finalString += ' ' + sir
+    print(finalString)
+    if len(finalSolutionList) == 0:
+        print('There is no solution.')
+    elif len(finalSolutionList) == 1:
+        print('There is a unique solution:')
+        for i in range(len(involved_sir_list)):
+            answer = 'Knight' if finalSolutionList[0][i] == 1 else 'Knave'
+            print(f'Sir {involved_sir_list[i]} is a {answer}.')
+    else:
+        print(f'There are {len(finalSolutionList)} solutions.')
 
 
+def check_whether_all_true(result_list_temp, currentPossibility):
+    for res in result_list_temp:
+        if res == False:
+            currentPossibility = False
+    result_list_temp.clear()
+    return currentPossibility
 
 
-
-def truth_table():
-  Result = False
-  for posibility in initialP:
-    for i in range (len(sortedSirs)):
-
-      # to implement 2 or more statements
-      if(sortedSirs[keys[i]]):
-        if (whichRule(sortedSirs[keys[i]])==9):
-          print('Rule 1 is triggered')
-          Result = run_rule_1( keys[i],posibility,sortedSirs[keys[i]])
-        if (whichRule(sortedSirs[keys[i]])==5):
-          Result = run_rule_5(true_false(posibility[i]),sortedSirs[keys[i]])
-        elif (whichRule(sortedSirs[keys[i]])==8):
-          print('Rule 8 is triggered')
-          Result = run_rule_8( keys[i],posibility,sortedSirs[keys[i]])
-        if Result:
-          print(posibility)
-          Result = False
-  
+def load_data_to_memory():
+    global involved_sir_list
+    sirs_with_statements = parsing_to_dict(
+        sirs_with_sentences_unsorted, sentence_divider, open_test_file, format_and_generate_list)
+    generate_possibilities(all_pissible_combination, sirs_with_statements)
+    involved_sir_list = list(sirs_with_statements.keys())
+    return sirs_with_statements
 
 
-truth_table()
+def iterate_through_truthtable(final_solution_list, sirs_with_statements):
+    for posibility in all_pissible_combination:
+        result_list_temp = list()
+        currentPossibility = True
+        for i in range(len(sirs_with_statements)):
+            result = False
+            statement = sirs_with_statements[involved_sir_list[i]]
+            data = involved_sir_list[i], posibility, statement
+            if(statement):
+                if form_one(statement):
+                    result = calculate_form_1(*data)
+                elif form_two(statement):
+                    result = calculate_form_2(*data)
+                elif form_three(statement):
+                    result = calculate_form_3(*data)
+                elif form_four(statement):
+                    result = calculate_form_4(*data)
+                elif form_five(statement):
+                    result = calculate_form_5(*data)
+                elif form_six(statement):
+                    result = calculate_form_6(*data)
+                elif form_seven(statement):
+                    result = calculate_form_7(*data)
+                elif form_eight(statement):
+                    result = calcualte_form_8(*data)
+                result_list_temp.append(result)
+
+        currentPossibility = check_whether_all_true(
+            result_list_temp, currentPossibility)
+        if currentPossibility == True:
+            final_solution_list.append(posibility)
+
+
+def run():
+    final_solution_list = list()
+    sirs_with_statements = load_data_to_memory()
+    iterate_through_truthtable(final_solution_list, sirs_with_statements)
+    print_final_results(final_solution_list)
+
+
+run()
